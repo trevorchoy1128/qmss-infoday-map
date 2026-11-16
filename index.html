@@ -193,6 +193,11 @@ h2{font-family:var(--display);font-weight:900;font-size:28px;margin:0 0 14px;let
 .fc.on{background:var(--fc);color:#fff}
 @media (max-width:700px){.iso-grid{grid-template-columns:1fr}#iso{display:none}.fl-chips{display:flex}#big{max-height:none}}
 
+.rot{position:absolute;right:14px;bottom:12px;z-index:2;display:flex;gap:6px}
+.rot button{border:1px solid var(--line);background:#fff;border-radius:10px;min-width:36px;height:36px;font-size:17px;cursor:pointer;color:var(--purple);font-weight:700}
+.rot button.txt{font-size:13px;padding:0 10px}
+.rot button:hover{border-color:var(--purple)}
+#big{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}#big text{pointer-events:none}#big .mk text{pointer-events:auto}#big:active{cursor:grabbing}
 /* Survey bar */
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(244,242,248,.94);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:10px 0 calc(10px + env(safe-area-inset-bottom))}
 .bar .wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:720px}
@@ -271,11 +276,12 @@ footer{text-align:center;color:var(--muted);font-size:14px;padding:36px 18px 16p
       <h2 class="ptitle">展區地圖</h2>
       <div class="iso-wrap">
         <div class="iso-stage">
-          <div class="iso-tools"><span class="iso-tip">點選樓層查看展區</span></div>
+          <div class="iso-tools"><span class="iso-tip">拖動地圖可以轉動</span></div>
+          <div class="rot" role="group" aria-label="轉動地圖"><button type="button" id="rotL" aria-label="向左轉">⟲</button><button type="button" id="rotR" aria-label="向右轉">⟳</button><button type="button" id="tiltU" aria-label="俯視多一點">▲</button><button type="button" id="tiltD" aria-label="俯視少一點">▼</button><button type="button" id="rotReset" class="txt">重設視角</button></div>
           <div class="fl-chips" id="flChips" role="group" aria-label="選擇樓層"></div>
           <div class="iso-grid">
             <svg id="iso" viewBox="0 0 660 860" role="group" aria-label="選擇樓層"></svg>
-            <svg id="big" viewBox="0 8 400 304" role="group" aria-label="選中樓層的平面圖"></svg>
+            <svg id="big" viewBox="0 0 400 330" role="group" aria-label="選中樓層的平面圖"></svg>
           </div>
         </div>
         <div class="iso-panel" id="isoPanel" aria-live="polite"></div>
@@ -497,14 +503,25 @@ function select(fi,{walk=true}={}){
 
 /* ===== big view of the selected floor ===== */
 const big=document.getElementById("big");
+let rotA=45,tilt=0.577; // view angle (deg) and tilt (screen y squash)
 function drawBig(){
   const [f,t,rs]=FLOORS[sel],[c,tint,side]=COL[t],rooms=(FLOORPLAN.floors[sel]||{rooms:[]}).rooms;
-  const OX=150,OY=92,Q=(x,y,z=0)=>[OX+(x-y)*C,OY+(x+y)*S-z],pp=a=>a.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  const K=1.2247,ra=rotA*Math.PI/180,ca=Math.cos(ra),sa=Math.sin(ra),CXc=200,CYc=196;
+  const rot=(x,y)=>{const X=x-W/2,Y=y-D/2;return [X*ca-Y*sa,X*sa+Y*ca];};
+  const Q=(x,y,z=0)=>{const [u,v]=rot(x,y);return [CXc+u*K,CYc+v*K*tilt-z*Math.sqrt(1-tilt*tilt)*1.15];};
+  const depth=(x,y)=>rot(x,y)[1];
+  const pp=a=>a.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
   const quad=(x0,x1,y0,y1,z=0)=>pp([Q(x0,y0,z),Q(x1,y0,z),Q(x1,y1,z),Q(x0,y1,z)]);
-  const prism=(x0,x1,y0,y1,z0,z1,top,fr,rt)=>`<polygon points="${pp([Q(x0,y1,z0),Q(x1,y1,z0),Q(x1,y1,z1),Q(x0,y1,z1)])}" fill="${fr}"/><polygon points="${pp([Q(x1,y0,z0),Q(x1,y1,z0),Q(x1,y1,z1),Q(x1,y0,z1)])}" fill="${rt}"/><polygon points="${quad(x0,x1,y0,y1,z1)}" fill="${top}" stroke="#8b82a6" stroke-width=".6"/>`;
+  // prism with only the faces that face the viewer
+  const prism=(x0,x1,y0,y1,z0,z1,top,dark,light,stroke)=>{
+    let o="";const sides=[[[x0,y1],[x1,y1],0,1],[[x1,y0],[x1,y1],1,0],[[x0,y0],[x1,y0],0,-1],[[x0,y0],[x0,y1],-1,0]];
+    sides.forEach(([p,q,nx,ny])=>{const nv=nx*sa+ny*ca;if(nv<=0)return;const nu=nx*ca-ny*sa;
+      o+=`<polygon points="${pp([Q(p[0],p[1],z0),Q(q[0],q[1],z0),Q(q[0],q[1],z1),Q(p[0],p[1],z1)])}" fill="${nu>0?light:dark}"/>`;});
+    return o+`<polygon points="${quad(x0,x1,y0,y1,z1)}" fill="${top}" stroke="${stroke||"none"}" stroke-width=".7"/>`;
+  };
   let h=`<defs><pattern id="bsol" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#3d4f7a"/><rect width="6" height="6" fill="#5b6f9e"/></pattern></defs>`;
-  const a=Q(0,0),b=Q(W,0),cc=Q(W,D),d=Q(0,D),dn=p=>[p[0],p[1]+TH];
-  h+=`<polygon points="${pp([d,cc,dn(cc),dn(d)])}" fill="${c}" opacity=".9"/><polygon points="${pp([cc,b,dn(b),dn(cc)])}" fill="${c}" opacity=".7"/><polygon points="${pp([a,b,cc,d])}" fill="#fff" stroke="${c}" stroke-width="2.5"/>`;
+  h+=prism(0,W,0,D,-TH,0,"#fff",c,c,c).replace(/fill="([^"]+)"\/>(?=<polygon)/g,(m,col)=>m); // slab
+  h=h.replace(`<polygon points="${quad(0,W,0,D,0)}" fill="#fff" stroke="${c}" stroke-width=".7"/>`,`<polygon points="${quad(0,W,0,D,0)}" fill="#fff" stroke="${c}" stroke-width="2.5"/>`);
   const FILL={void:'#e4e0ec',cor:'#f3f1f8',solar:'url(#bsol)',room:'#e9e5f1'};
   const pins=[],seen={};
   ["cor","void","room","solar","ex"].forEach(kind=>rooms.filter(r=>r.k===kind).forEach(r=>{
@@ -512,23 +529,43 @@ function drawBig(){
     h+=`<polygon points="${quad(r.x,r.x+r.w,r.y,r.y+r.h)}" fill="${on?c:FILL[r.k]||"#f7f5fb"}" fill-opacity="${on?.88:1}" stroke="${r.k==="cor"?"none":"#fff"}" stroke-width="2.4" stroke-linejoin="round"/>`;
     if(on&&!seen[r.e]){seen[r.e]=1;pins.push([r.e,r.x+r.w/2,r.y+r.h/2]);}
   }));
-  // stairs as real steps, lift as a box
+  // 3D objects (stair steps, lift) sorted far to near
+  const objs=[],labels=[];
   rooms.filter(r=>r.k==="st").forEach(r=>{
-    if(r.n==="電梯"){h+=prism(r.x+1,r.x+r.w-1,r.y+1,r.y+r.h-1,0,26,"#d9d4e6","#9c94b4","#b8b0cc");const p=Q(r.x+r.w/2,r.y+r.h/2,26);h+=`<text x="${p[0]}" y="${p[1]+4}" class="st-l">電梯</text>`;return;}
-    const n=8,dy=r.h/n,hs=3.2;h+=`<polygon points="${quad(r.x,r.x+r.w,r.y,r.y+r.h)}" fill="#e4e0ec" stroke="#b9b2cc" stroke-width=".8"/>`;
-    for(let s2=0;s2<n;s2++){const y1=r.y+r.h-s2*dy,y0=y1-dy;h+=prism(r.x+1,r.x+r.w-1,y0,y1,s2*hs,(s2+1)*hs,"#f4f2f8","#8b82a6","#a79fbf");}
-    const p=Q(r.x+r.w/2,r.y+r.h*0.5,n*hs*0.5+8);h+=`<text x="${p[0]}" y="${p[1]}" class="st-l">${esc(r.n)}</text>`;
+    if(r.n==="電梯"){objs.push([depth(r.x+r.w/2,r.y+r.h/2),prism(r.x+1,r.x+r.w-1,r.y+1,r.y+r.h-1,0,26,"#d9d4e6","#9c94b4","#b8b0cc","#8b82a6")]);labels.push([r.x+r.w/2,r.y+r.h/2,30,"電梯"]);return;}
+    h+=`<polygon points="${quad(r.x,r.x+r.w,r.y,r.y+r.h)}" fill="#e4e0ec" stroke="#fff" stroke-width="2.4"/>`;
+    const n=8,dy=r.h/n,hs=3.2;
+    for(let k=0;k<n;k++){const y1=r.y+r.h-k*dy,y0=y1-dy;objs.push([depth(r.x+r.w/2,(y0+y1)/2)+k*0.001,prism(r.x+1,r.x+r.w-1,y0,y1,0,(k+1)*hs,"#f4f2f8","#8b82a6","#a79fbf","#8b82a6")]);}
+    labels.push([r.x+r.w/2,r.y+r.h/2,n*hs*0.5+10,r.n]);
   });
-  pins.sort((p,q)=>(p[1]-p[2])-(q[1]-q[2])).forEach((pn,k)=>{const [ri,x,y]=pn,r=rs[ri],p=Q(x,y),st=[16,40,64][k%3];
+  objs.sort((p,q)=>p[0]-q[0]).forEach(o=>h+=o[1]);
+  labels.forEach(([x,y,z,n])=>{const p=Q(x,y,z);h+=`<text x="${p[0]}" y="${p[1]}" class="st-l">${esc(n)}</text>`;});
+  const pl=pins.map(pn=>[pn,Q(pn[1],pn[2])]).sort((p,q)=>p[1][0]-q[1][0]).map((x,k)=>[...x,[16,40,64][k%3]]).sort((p,q)=>p[1][1]-q[1][1]);
+  pl.forEach(([pn,p,st])=>{const ri=pn[0],r=rs[ri];
     h+=`<g class="mk" data-f="${sel}" data-r="${ri}" role="button" tabindex="0" aria-label="${esc(r[0])} ${esc(r[1])}"><line x1="${p[0]}" y1="${p[1]}" x2="${p[0]}" y2="${p[1]-st}" stroke="#1c1530" stroke-width="1.8"/><circle cx="${p[0]}" cy="${p[1]}" r="2.6" fill="#1c1530"/><circle cx="${p[0]}" cy="${p[1]-st-13}" r="13" fill="#fff" stroke="${c}" stroke-width="2.8"/><text x="${p[0]}" y="${p[1]-st-7.5}" class="mk-t big" style="fill:${c}">${ri+1}</text><title>${esc(r[0])}：${esc(r[1])}</title></g>`;});
   if(sel===N-1){ // GF extras
-    const e0=Q(W+32,6),e1=Q(W+6,6);h+=`<g class="entr"><line x1="${e0[0]}" y1="${e0[1]}" x2="${e1[0]}" y2="${e1[1]}" stroke="#33186f" stroke-width="3.5" stroke-linecap="round"/><polygon points="${e1[0]-2},${e1[1]-1} ${e1[0]+10},${e1[1]-2} ${e1[0]+5},${e1[1]+8}" fill="#33186f"/><text x="${e0[0]-6}" y="${e0[1]-10}" class="ent-t">入口</text></g>`;
+    const e0=Q(W+32,6),e1=Q(W+6,6),ang=Math.atan2(e1[1]-e0[1],e1[0]-e0[0]),hx=e1[0],hy=e1[1];
+    const ah=(d,s)=>[hx-Math.cos(ang+s)*d,hy-Math.sin(ang+s)*d];const a1=ah(11,.5),a2=ah(11,-.5);
+    h+=`<g class="entr"><line x1="${e0[0]}" y1="${e0[1]}" x2="${e1[0]}" y2="${e1[1]}" stroke="#33186f" stroke-width="3.5" stroke-linecap="round"/><polygon points="${hx},${hy} ${a1[0]},${a1[1]} ${a2[0]},${a2[1]}" fill="#33186f"/><text x="${e0[0]}" y="${e0[1]-10}" class="ent-t" text-anchor="middle">入口</text></g>`;
     const bk=Q(110,62);h+=`<g class="notes" fill="#c0412f"><text x="${bk[0]-26}" y="${bk[1]-4}" class="nt n1">♪</text><text x="${bk[0]-12}" y="${bk[1]-12}" class="nt n2">♫</text><text x="${bk[0]-38}" y="${bk[1]-14}" class="nt n3">♪</text></g>`;
     const live=liveNow();if(live){const p=live.spot==="hall"?Q(157,52):bk;h+=`<g class="live"><circle cx="${p[0]}" cy="${p[1]}" r="8" fill="#d1242c"/><circle class="pulse" cx="${p[0]}" cy="${p[1]}" r="8" fill="none" stroke="#d1242c" stroke-width="3"/><rect x="${p[0]-54}" y="${p[1]-42}" width="108" height="24" rx="12" fill="#d1242c"/><text x="${p[0]}" y="${p[1]-25}" class="live-t">${live.text}</text></g>`;}
   }
-  h+=`<text x="12" y="30" class="bf-n" fill="${c}">${f}</text><text x="${f.length>2?12:12}" y="52" class="bf-t" fill="${c}">${THEMES[t]}</text>`;
+  h+=`<text x="12" y="30" class="bf-n" fill="${c}">${f}</text><text x="12" y="52" class="bf-t" fill="${c}">${THEMES[t]}</text>`;
   big.innerHTML=h;
 }
+/* rotate by dragging; buttons for touch users */
+let rdrag=null,moved=false;
+big.addEventListener("pointerdown",e=>{rdrag={x:e.clientX,y:e.clientY,a:rotA,t:tilt,id:e.pointerId};moved=false;});
+big.addEventListener("pointermove",e=>{if(!rdrag)return;const dx=e.clientX-rdrag.x,dy=e.clientY-rdrag.y;
+  if(!moved&&Math.hypot(dx,dy)<5)return;if(!moved){moved=true;try{big.setPointerCapture(rdrag.id)}catch(_){}}
+  rotA=(rdrag.a-dx*0.45)%360;if(e.pointerType==="mouse")tilt=Math.min(.92,Math.max(.32,rdrag.t-dy*0.003));drawBig();});
+const endR=()=>{rdrag=null;};big.addEventListener("pointerup",endR);big.addEventListener("pointercancel",endR);
+big.addEventListener("click",e=>{if(moved){e.stopPropagation();moved=false;}},true);
+document.getElementById("rotL").addEventListener("click",()=>{rotA-=45;drawBig();});
+document.getElementById("rotR").addEventListener("click",()=>{rotA+=45;drawBig();});
+document.getElementById("tiltU").addEventListener("click",()=>{tilt=Math.max(.32,tilt-.12);drawBig();});
+document.getElementById("tiltD").addEventListener("click",()=>{tilt=Math.min(.92,tilt+.12);drawBig();});
+document.getElementById("rotReset").addEventListener("click",()=>{rotA=45;tilt=.577;drawBig();});
 big.addEventListener("click",e=>{roomFrom(e.target);});
 big.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();roomFrom(e.target);}});
 const chips=document.getElementById("flChips");
