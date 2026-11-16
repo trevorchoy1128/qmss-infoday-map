@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>button,a,svg,.panel{touch-action:manipulation}</style>
 <title>慕德升中資訊日 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +19,7 @@
   color-scheme:light;
 }
 *{box-sizing:border-box}
-html,body{margin:0}
+html,body{margin:0;touch-action:manipulation}
 body{background:var(--page);color:var(--ink);font-family:var(--body);line-height:1.6;font-size:17px;padding-bottom:96px}
 :focus-visible{outline:3px solid var(--red);outline-offset:3px;border-radius:6px}
 .wrap{max-width:1800px;margin:0 auto;padding:0 clamp(18px,2.5vw,40px)}
@@ -173,6 +174,10 @@ h2{font-family:var(--display);font-weight:900;font-size:28px;margin:0 0 14px;let
 .ip-room strong{font-family:var(--display);font-weight:900;font-size:18px;line-height:1.35}
 .ip-room em{font-style:normal;color:var(--c);font-size:24px}
 .bar .wrap.one{grid-template-columns:1fr;max-width:460px}
+.bar .wrap.two{grid-template-columns:1.4fr 1fr;max-width:620px}
+.igbtn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 10px;border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:17px;white-space:nowrap;background:linear-gradient(45deg,#f9a03f 0%,#e8336d 45%,#a032c8 100%)}
+.igbtn:hover{filter:brightness(1.08)}
+
 
 
 .iso-grid{display:grid;grid-template-columns:minmax(150px,26%) 1fr;gap:10px;align-items:center}
@@ -308,9 +313,10 @@ footer{text-align:center;color:var(--muted);font-size:14px;padding:36px 18px 16p
 
 <footer>港澳信義會慕德中學 · 2026 升中資訊日</footer>
 
-<nav class="bar" aria-label="意見問卷">
-  <div class="wrap one">
+<nav class="bar" aria-label="意見問卷及 Instagram">
+  <div class="wrap two">
     <a class="qbtn" data-survey="visit" href="https://docs.google.com/forms/d/e/1FAIpQLScut7QQIQYBjDKqKuF-mVHRVajePN_r1fBbPYvxYM5ji3MCsw/viewform" target="_blank" rel="noopener"><span aria-hidden="true">✎</span>填寫意見問卷</a>
+    <a class="igbtn" href="https://www.instagram.com/qmerstv/" target="_blank" rel="noopener" aria-label="Instagram @qmerstv（在新分頁開啟）"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg><span>@qmerstv</span></a>
   </div>
 </nav>
 
