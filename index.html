@@ -195,14 +195,30 @@ h2{font-family:var(--display);font-weight:900;font-size:28px;margin:0 0 14px;let
 #big .live-t{fill:#fff;font-family:var(--body);font-weight:900;font-size:13px;text-anchor:middle}
 .liftcol{display:none}
 @media (max-width:700px){
-  .iso-grid{grid-template-columns:minmax(0,1fr) 62px;gap:6px;align-items:center;margin-top:30px}
-  #iso{display:none}#big{max-height:none}
-  .iso-tools{right:auto;left:14px}
-  .liftcol{display:flex;flex-direction:column;gap:3px;padding:5px;border-radius:20px;background:#fff;box-shadow:0 6px 18px rgba(28,21,48,.12)}
-  .fc{display:flex;align-items:center;justify-content:center;gap:3px;height:36px;border:0;border-radius:12px;background:transparent;color:var(--fc);cursor:pointer;padding:0 4px}
-  .fc svg{width:15px;height:15px;flex:none;overflow:visible}
+  .iso-wrap{position:relative;height:calc(100svh - 150px);min-height:440px;overflow:hidden;border-radius:22px}
+  .iso-stage{position:absolute;inset:0;padding:0;border-radius:22px}
+  .iso-grid{display:block;height:100%;margin:0}
+  #iso{display:none}
+  #big{width:100%;height:100%;max-height:none}
+  .iso-tools{display:none}
+  .liftcol{position:absolute;right:8px;top:10px;z-index:3;display:flex;flex-direction:column;gap:2px;padding:4px;border-radius:20px;background:rgba(255,255,255,.94);box-shadow:0 6px 18px rgba(28,21,48,.14)}
+  .fc{display:flex;align-items:center;justify-content:center;gap:3px;height:34px;border:0;border-radius:12px;background:transparent;color:var(--fc);cursor:pointer;padding:0 5px}
+  .fc svg{width:14px;height:14px;flex:none;overflow:visible}
   .fc b{font-family:var(--num);font-weight:900;font-size:15px;min-width:22px;text-align:left}
   .fc.on{background:var(--fc);color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+  .iso-panel{position:absolute;left:0;right:0;bottom:0;z-index:4;max-height:78%;overflow-y:auto;border-radius:22px 22px 0 0;padding:8px 14px 14px;box-shadow:0 -8px 24px rgba(28,21,48,.16);transform:translateY(calc(100% - 74px));transition:transform .25s ease}
+  .iso-panel.open{transform:none}
+  .iso-panel::before{content:"";display:block;width:42px;height:5px;border-radius:3px;background:#d6d0e3;margin:0 auto 8px}
+  .ip-h{cursor:pointer;gap:12px}
+  .ip-h b{font-size:30px}
+  .ip-h strong{font-size:17px}
+  .ip-h small{display:none}
+  .ip-tog{margin-left:auto;font-style:normal;color:var(--muted);font-size:13px;white-space:nowrap}
+  .ip-tog::after{content:"展區列表 ▲"}
+  .iso-panel.open .ip-tog::after{content:"收起 ▼"}
+  .legend{display:none}
+}
+@media (max-width:700px) and (prefers-reduced-motion:reduce){.iso-panel{transition:none}}
 }
 
 #big.drag .nt,#big.drag .pulse{animation:none}
@@ -504,7 +520,7 @@ let bubble="",dirty=true;
 
 function renderPanel(){
   const [f,t,rs]=FLOORS[sel];panel.setAttribute("data-t",t);
-  panel.innerHTML=`<div class="ip-h"><b>${f}</b><div><strong>${THEMES[t]}</strong><small>${rs.length} 個展區 · 地圖上的數字對應下面的展區</small></div></div>
+  panel.innerHTML=`<div class="ip-h"><b>${f}</b><div><strong>${THEMES[t]}</strong><small>${rs.length} 個展區 · 地圖上的數字對應下面的展區</small></div><em class="ip-tog" aria-hidden="true"></em></div>
    <div class="ip-list">${rs.map((r,ri)=>`<button type="button" class="ip-room" data-f="${sel}" data-r="${ri}"><i>${ri+1}</i><span><small>${esc(r[0])}</small><strong>${esc(r[1])}</strong></span><em aria-hidden="true">›</em></button>`).join("")}</div>`;
 }
 
@@ -525,7 +541,7 @@ function walkTo(fi,cb){
   walking=true;
 }
 function select(fi,{walk=true}={}){
-  sel=fi;renderPanel();dirty=true;drawBig();renderChips();
+  sel=fi;panel.classList.remove("open");renderPanel();dirty=true;drawBig();renderChips();
 }
 
 
@@ -536,9 +552,9 @@ let lite=false,bigQueued=false;
 function queueBig(){if(rdrag)lite=true;if(bigQueued)return;bigQueued=true;requestAnimationFrame(()=>{bigQueued=false;drawBig();});}
 function drawBig(){
   const [f,t,rs]=FLOORS[sel],[c,tint,side]=COL[t],rooms=(FLOORPLAN.floors[sel]||{rooms:[]}).rooms;
-  const K=1.2247,ra=rotA*Math.PI/180,ca=Math.cos(ra),sa=Math.sin(ra),CXc=200,CYc=196;
+  const PH=typeof mqBig!=="undefined"&&mqBig.matches,KS=PH?1.18:1,K=1.2247*KS,ra=rotA*Math.PI/180,ca=Math.cos(ra),sa=Math.sin(ra),CXc=PH?150:200,CYc=PH?300:196;
   const rot=(x,y)=>{const X=x-W/2,Y=y-D/2;return [X*ca-Y*sa,X*sa+Y*ca];};
-  const Q=(x,y,z=0)=>{const [u,v]=rot(x,y);return [CXc+u*K,CYc+v*K*tilt-z*Math.sqrt(1-tilt*tilt)*1.15];};
+  const Q=(x,y,z=0)=>{const [u,v]=rot(x,y);return [CXc+u*K,CYc+v*K*tilt-z*Math.sqrt(1-tilt*tilt)*1.15*KS];};
   const depth=(x,y)=>rot(x,y)[1];
   const pp=a=>a.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
   const quad=(x0,x1,y0,y1,z=0)=>pp([Q(x0,y0,z),Q(x1,y0,z),Q(x1,y1,z),Q(x0,y1,z)]);
@@ -570,7 +586,9 @@ function drawBig(){
   });
   objs.sort((p,q)=>p[0]-q[0]).forEach(o=>h+=o[1]);
   labels.forEach(([x,y,z,n])=>{const p=Q(x,y,z);h+=`<text x="${p[0]}" y="${p[1]}" class="st-l">${esc(n)}</text>`;});
-  const pl=pins.map(pn=>[pn,Q(pn[1],pn[2])]).sort((p,q)=>p[1][0]-q[1][0]).map((x,k)=>[...x,[16,40,64][k%3]]).sort((p,q)=>p[1][1]-q[1][1]);
+  const placed=[];const pl=pins.map(pn=>[pn,Q(pn[1],pn[2])]).sort((p,q)=>p[1][0]-q[1][0]).map(x=>{const p=x[1];let st=16;
+    for(const cand of [16,40,64,88,112]){st=cand;const cy=p[1]-cand-13;if(placed.every(o=>Math.hypot(o[0]-p[0],o[1]-cy)>30))break;}
+    placed.push([p[0],p[1]-st-13]);return [...x,st];}).sort((p,q)=>p[1][1]-q[1][1]);
   pl.forEach(([pn,p,st])=>{const ri=pn[0],r=rs[ri];
     h+=`<g class="mk" data-f="${sel}" data-r="${ri}" role="button" tabindex="0" aria-label="${esc(r[0])} ${esc(r[1])}"><line x1="${p[0]}" y1="${p[1]}" x2="${p[0]}" y2="${p[1]-st}" stroke="#1c1530" stroke-width="1.8"/><circle cx="${p[0]}" cy="${p[1]}" r="2.6" fill="#1c1530"/><circle cx="${p[0]}" cy="${p[1]-st-13}" r="13" fill="#fff" stroke="${c}" stroke-width="2.8"/><text x="${p[0]}" y="${p[1]-st-7.5}" class="mk-t big" style="fill:${c}">${ri+1}</text><title>${esc(r[0])}：${esc(r[1])}</title></g>`;});
   if(sel===N-1){ // GF extras
@@ -580,7 +598,7 @@ function drawBig(){
     const bk=Q(110,62);h+=`<g class="notes" fill="#c0412f"><text x="${bk[0]-26}" y="${bk[1]-4}" class="nt n1">♪</text><text x="${bk[0]-12}" y="${bk[1]-12}" class="nt n2">♫</text><text x="${bk[0]-38}" y="${bk[1]-14}" class="nt n3">♪</text></g>`;
     const live=liveNow();if(live){const p=live.spot==="hall"?Q(157,52):bk;h+=`<g class="live"><circle cx="${p[0]}" cy="${p[1]}" r="8" fill="#d1242c"/><circle class="pulse" cx="${p[0]}" cy="${p[1]}" r="8" fill="none" stroke="#d1242c" stroke-width="3"/><rect x="${p[0]-54}" y="${p[1]-42}" width="108" height="24" rx="12" fill="#d1242c"/><text x="${p[0]}" y="${p[1]-25}" class="live-t">${live.text}</text></g>`;}
   }
-  h+=`<text x="38" y="38" class="bf-n" fill="${c}">${f}</text><text x="38" y="58" class="bf-t" fill="${c}">${THEMES[t]}</text>`;
+  h+=PH?`<text x="14" y="40" class="bf-n" fill="${c}">${f}</text><text x="14" y="60" class="bf-t" fill="${c}">${THEMES[t]}</text>`:`<text x="38" y="38" class="bf-n" fill="${c}">${f}</text><text x="38" y="58" class="bf-t" fill="${c}">${THEMES[t]}</text>`;
   big.innerHTML=h;
 }
 /* rotate by dragging; buttons for touch users */
@@ -594,7 +612,7 @@ big.addEventListener("click",e=>{if(moved){e.stopPropagation();moved=false;}},tr
 big.addEventListener("click",e=>{roomFrom(e.target);});
 big.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();roomFrom(e.target);}});
 const chips=document.getElementById("flChips");
-const mqBig=window.matchMedia("(max-width:700px)");function fitBig(){big.setAttribute("viewBox",mqBig.matches?"30 14 372 304":"0 0 400 330");}fitBig();try{mqBig.addEventListener("change",fitBig)}catch(e){}
+const mqBig=window.matchMedia("(max-width:700px)");function fitBig(){if(mqBig.matches){big.setAttribute("viewBox","0 0 320 600");rotA=78;tilt=.78;}else{big.setAttribute("viewBox","0 0 400 330");rotA=45;tilt=.577;}if(typeof drawBig==="function"&&FLOORS)drawBig();}fitBig();try{mqBig.addEventListener("change",fitBig)}catch(e){}
 function renderChips(){chips.innerHTML=FLOORS.map(([f,t],i)=>`<button type="button" class="fc${i===sel?" on":""}" style="--fc:${COL[t][0]}" data-fl="${i}" aria-pressed="${i===sel}" aria-label="${f} ${THEMES[t]}"><svg viewBox="-18 -18 36 36" aria-hidden="true"><g fill="currentColor" stroke="currentColor">${icon(t)}</g></svg><b>${f}</b></button>`).join("");}
 chips.addEventListener("click",e=>{const b=e.target.closest("[data-fl]");if(b)select(+b.dataset.fl);});
 
@@ -620,7 +638,7 @@ function roomFrom(el){const b=el.closest("[data-r]");if(!b)return false;openRoom
 svg.addEventListener("pointerdown",e=>{if(e.target.closest("[data-r]"))return;const g=e.target.closest("[data-fl]");if(g){select(+g.dataset.fl);}});
 svg.addEventListener("click",e=>{roomFrom(e.target);});
 svg.addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;e.preventDefault();if(roomFrom(e.target))return;const g=e.target.closest("[data-fl]");if(g){select(+g.dataset.fl);}});
-panel.addEventListener("click",e=>roomFrom(e.target));
+panel.addEventListener("click",e=>{if(e.target.closest(".ip-h")&&mqBig.matches){panel.classList.toggle("open");return;}if(roomFrom(e.target))panel.classList.remove("open");});
 
 const mq=window.matchMedia("(max-width:560px)");
 function fitBox(){ // crop the drawing to its own bounds over every floor state
