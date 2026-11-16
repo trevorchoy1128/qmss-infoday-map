@@ -115,23 +115,23 @@ h2{font-family:var(--display);font-weight:900;font-size:28px;margin:0 0 14px;let
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:14px;height:14px;border-radius:4px;background:var(--c)}
 
-[data-t="arts"]{--c:#c0412f;--tint:#fbefec}
-[data-t="fly"]{--c:#a8730f;--tint:#fbf4e3}
-[data-t="world"]{--c:#0e7a73;--tint:#e6f4f2}
-[data-t="sci"]{--c:#2c5cb0;--tint:#e9effa}
-[data-t="new"]{--c:#3f7d31;--tint:#eaf3e6}
+[data-t="arts"]{--c:#e02d2d;--tint:#ffdcdc}
+[data-t="fly"]{--c:#f07a0a;--tint:#ffe2c2}
+[data-t="world"]{--c:#d49e00;--tint:#fff0a3}
+[data-t="sci"]{--c:#17a34a;--tint:#cdf0da}
+[data-t="new"]{--c:#1f6fe0;--tint:#d4e5ff}
 
 
 /* 3D floors */
 .iso-wrap{display:grid;gap:16px}
-@media (min-width:1000px){.iso-wrap{display:flex;align-items:flex-start;justify-content:center;gap:24px;container-type:inline-size}.iso-stage{position:sticky;top:10px;flex:0 0 auto}.iso-wrap #iso{width:min(calc(100cqw - 364px),calc((100dvh - 320px) * var(--ar,.7)));max-height:none}.iso-panel{flex:1 1 320px;min-width:320px;max-width:640px}.iso-panel{position:sticky;top:20px;max-height:calc(100dvh - 40px);overflow-y:auto}}
+@media (min-width:1000px){.iso-wrap{display:flex;align-items:flex-start;justify-content:center;gap:24px;container-type:inline-size}.iso-stage{position:sticky;top:10px;flex:0 0 auto}.iso-wrap #iso{width:min(calc(100cqw - 364px),calc((100svh - 320px) * var(--ar,.7)));max-height:none}.iso-panel{flex:1 1 320px;min-width:320px;max-width:640px}.iso-panel{position:sticky;top:20px;max-height:calc(100svh - 40px);overflow-y:auto}}
 .iso-stage{background:radial-gradient(ellipse at 40% 30%,#ffffff 0%,#f0ecf8 70%);border-radius:24px;padding:10px;border:1px solid var(--line);position:relative}
 .iso-tools{position:absolute;right:16px;top:12px;z-index:1;pointer-events:none}
 .tour{all:unset;cursor:pointer;background:var(--purple);color:#fff;font-weight:700;font-size:16px;padding:10px 18px;border-radius:999px;box-shadow:0 6px 16px rgba(51,24,111,.2)}
 .tour[aria-pressed="true"]{background:var(--red)}
 .tour:focus-visible{outline:3px solid var(--red);outline-offset:3px}
 .iso-tip{color:var(--muted);font-size:14px;background:rgba(255,255,255,.8);padding:3px 10px;border-radius:999px}
-#iso{display:block;width:100%;height:auto;max-height:calc(100dvh - 120px);margin:0 auto;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#iso{display:block;width:100%;height:auto;margin:0 auto;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 #iso .fl-g{cursor:pointer}
 #iso .fl-g:focus{outline:none}
 #iso .fl-g:focus-visible .top{stroke:#d1242c;stroke-width:4}
@@ -328,7 +328,7 @@ const FLOORS=[
   ["111 視藝室","自然美","可持續發展組","環保工作坊、可持續發展展覽及遊戲。","小禮物"],
   ["113 小禮堂","祢把我尋回","基督少年軍 · Luminaries","露營用品展示、攤位遊戲，製作和諧粉彩書簽。","零食、書簽"]]],
  ["GF","arts",[
-  ["大堂","成長樹","學校","歡迎來賓，領取禮物包。"],
+  ["大堂","成長樹","學校","大堂展示「成長樹」。"],
   ["禮堂","講座","學校","講座 1（2:10）AI 啟迪學習；講座 2（2:40）慕德人成長之路。詳見活動時間表。"],
   ["雨天操場 · 籃球場","划・盤・球 動感三重奏","體育科","Pickleball、躲避盤、室內划艇機，一次玩齊。","小禮物"],
   ["小排球場","Busking","宗教組 · 音樂科","流行樂隊及敬拜隊獻唱詩歌及流行歌：3:10 – 3:50、4:00 – 4:40 兩節。"]]]
@@ -368,7 +368,7 @@ document.querySelectorAll(".qbtn").forEach(a=>a.addEventListener("click",e=>{
 (function(){
 const svg=document.getElementById("iso"),panel=document.getElementById("isoPanel");
 const NS="http://www.w3.org/2000/svg";
-const COL={new:["#3f7d31","#eaf3e6","#cfe5c6"],sci:["#2c5cb0","#e9effa","#c9d8f3"],world:["#0e7a73","#e6f4f2","#c3e6e1"],fly:["#a8730f","#fbf4e3","#f1dfb4"],arts:["#c0412f","#fbefec","#f3d0c8"]};
+const COL={arts:["#e02d2d","#ffdcdc","#f5a3a3"],fly:["#f07a0a","#ffe2c2","#f9b878"],world:["#d49e00","#fff0a3","#f2d462"],sci:["#17a34a","#cdf0da","#86d6a3"],new:["#1f6fe0","#d4e5ff","#93bdf5"]};
 const W=240,D=150,C=0.866,S=0.5,CX=190,GAP=58,LIFT=150,TOP=62,TH=10;
 const stY=k=>k%2===0?{lo:D*0.72,hi:D*0.28}:{lo:D*0.28,hi:D*0.72}; // switchback stairs
 const N=FLOORS.length;
