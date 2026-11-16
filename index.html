@@ -205,6 +205,7 @@ h2{font-family:var(--display);font-weight:900;font-size:28px;margin:0 0 14px;let
   .fc.on{background:var(--fc);color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18)}
 }
 
+#big.drag .nt,#big.drag .pulse{animation:none}
 #big{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}#big text{pointer-events:none}#big .mk text{pointer-events:auto}#big:active{cursor:grabbing}
 
 /* short landscape screens (phones held sideways) */
@@ -389,7 +390,7 @@ const FLOORS=[
   ["207 室","中一收生程序（錄影）","收生註冊組","中一收生程序簡介短片，下午 2:00 – 5:00 循環播放。"]]],
  ["1F","arts",[
   ["102 悅書房","真相，總在最後一頁","圖書館","東野圭吾推理書展，參觀悅書房。","精美書簽"],
-  ["106 音樂訓練中心","我們的秘密基地","音樂科","參觀 Band 房，由同學帶領導賞。"],
+  ["106 音樂訓練中心","我們的秘密基地","音樂科","參觀 Band 房。"],
   ["111 視藝室","自然美","可持續發展組","環保工作坊、可持續發展展覽及遊戲。","小禮物"],
   ["113AB 小禮堂","祢把我尋回","基督少年軍 · Luminaries","露營用品展示、攤位遊戲，製作和諧粉彩書簽。","零食、書簽"]]],
  ["GF","arts",[
@@ -531,6 +532,8 @@ function select(fi,{walk=true}={}){
 /* ===== big view of the selected floor ===== */
 const big=document.getElementById("big");
 let rotA=45,tilt=0.577; // view angle (deg) and tilt (screen y squash)
+let lite=false,bigQueued=false;
+function queueBig(){if(rdrag)lite=true;if(bigQueued)return;bigQueued=true;requestAnimationFrame(()=>{bigQueued=false;drawBig();});}
 function drawBig(){
   const [f,t,rs]=FLOORS[sel],[c,tint,side]=COL[t],rooms=(FLOORPLAN.floors[sel]||{rooms:[]}).rooms;
   const K=1.2247,ra=rotA*Math.PI/180,ca=Math.cos(ra),sa=Math.sin(ra),CXc=200,CYc=196;
@@ -561,7 +564,7 @@ function drawBig(){
   rooms.filter(r=>r.k==="st").forEach(r=>{
     if(r.n==="電梯"){objs.push([depth(r.x+r.w/2,r.y+r.h/2),prism(r.x+1,r.x+r.w-1,r.y+1,r.y+r.h-1,0,26,"#d9d4e6","#9c94b4","#b8b0cc","#8b82a6")]);labels.push([r.x+r.w/2,r.y+r.h/2,30,"電梯"]);return;}
     h+=`<polygon points="${quad(r.x,r.x+r.w,r.y,r.y+r.h)}" fill="#e4e0ec" stroke="#fff" stroke-width="2.4"/>`;
-    const n=8,dy=r.h/n,hs=3.2;
+    const n=lite?2:8,dy=r.h/n,hs=3.2*8/n;
     for(let k=0;k<n;k++){const y1=r.y+r.h-k*dy,y0=y1-dy;objs.push([depth(r.x+r.w/2,(y0+y1)/2)+k*0.001,prism(r.x+1,r.x+r.w-1,y0,y1,0,(k+1)*hs,"#f4f2f8","#8b82a6","#a79fbf","#8b82a6")]);}
     labels.push([r.x+r.w/2,r.y+r.h/2,n*hs*0.5+10,r.n]);
   });
@@ -584,9 +587,9 @@ function drawBig(){
 let rdrag=null,moved=false;
 big.addEventListener("pointerdown",e=>{rdrag={x:e.clientX,y:e.clientY,a:rotA,t:tilt,id:e.pointerId};moved=false;});
 big.addEventListener("pointermove",e=>{if(!rdrag)return;const dx=e.clientX-rdrag.x,dy=e.clientY-rdrag.y;
-  if(!moved&&Math.hypot(dx,dy)<5)return;if(!moved){moved=true;try{big.setPointerCapture(rdrag.id)}catch(_){}}
-  rotA=(rdrag.a-dx*0.45)%360;if(e.pointerType==="mouse")tilt=Math.min(.92,Math.max(.32,rdrag.t-dy*0.003));drawBig();});
-const endR=()=>{rdrag=null;};big.addEventListener("pointerup",endR);big.addEventListener("pointercancel",endR);
+  if(!moved&&Math.hypot(dx,dy)<5)return;if(!moved){moved=true;big.classList.add('drag');try{big.setPointerCapture(rdrag.id)}catch(_){}}
+  rotA=(rdrag.a-dx*0.45)%360;if(e.pointerType==="mouse")tilt=Math.min(.92,Math.max(.32,rdrag.t-dy*0.003));queueBig();});
+const endR=()=>{big.classList.remove('drag');const was=moved;rdrag=null;lite=false;if(was)queueBig();};big.addEventListener("pointerup",endR);big.addEventListener("pointercancel",endR);
 big.addEventListener("click",e=>{if(moved){e.stopPropagation();moved=false;}},true);
 big.addEventListener("click",e=>{roomFrom(e.target);});
 big.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();roomFrom(e.target);}});
