@@ -193,10 +193,6 @@ h2{font-family:var(--display);font-weight:900;font-size:28px;margin:0 0 14px;let
 .fc.on{background:var(--fc);color:#fff}
 @media (max-width:700px){.iso-grid{grid-template-columns:1fr}#iso{display:none}.fl-chips{display:flex}#big{max-height:none}}
 
-.rot{position:absolute;right:14px;bottom:12px;z-index:2;display:flex;gap:6px}
-.rot button{border:1px solid var(--line);background:#fff;border-radius:10px;min-width:36px;height:36px;font-size:17px;cursor:pointer;color:var(--purple);font-weight:700}
-.rot button.txt{font-size:13px;padding:0 10px}
-.rot button:hover{border-color:var(--purple)}
 #big{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}#big text{pointer-events:none}#big .mk text{pointer-events:auto}#big:active{cursor:grabbing}
 /* Survey bar */
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(244,242,248,.94);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:10px 0 calc(10px + env(safe-area-inset-bottom))}
@@ -277,7 +273,6 @@ footer{text-align:center;color:var(--muted);font-size:14px;padding:36px 18px 16p
       <div class="iso-wrap">
         <div class="iso-stage">
           <div class="iso-tools"><span class="iso-tip">拖動地圖可以轉動</span></div>
-          <div class="rot" role="group" aria-label="轉動地圖"><button type="button" id="rotL" aria-label="向左轉">⟲</button><button type="button" id="rotR" aria-label="向右轉">⟳</button><button type="button" id="tiltU" aria-label="俯視多一點">▲</button><button type="button" id="tiltD" aria-label="俯視少一點">▼</button><button type="button" id="rotReset" class="txt">重設視角</button></div>
           <div class="fl-chips" id="flChips" role="group" aria-label="選擇樓層"></div>
           <div class="iso-grid">
             <svg id="iso" viewBox="0 0 660 860" role="group" aria-label="選擇樓層"></svg>
@@ -561,11 +556,6 @@ big.addEventListener("pointermove",e=>{if(!rdrag)return;const dx=e.clientX-rdrag
   rotA=(rdrag.a-dx*0.45)%360;if(e.pointerType==="mouse")tilt=Math.min(.92,Math.max(.32,rdrag.t-dy*0.003));drawBig();});
 const endR=()=>{rdrag=null;};big.addEventListener("pointerup",endR);big.addEventListener("pointercancel",endR);
 big.addEventListener("click",e=>{if(moved){e.stopPropagation();moved=false;}},true);
-document.getElementById("rotL").addEventListener("click",()=>{rotA-=45;drawBig();});
-document.getElementById("rotR").addEventListener("click",()=>{rotA+=45;drawBig();});
-document.getElementById("tiltU").addEventListener("click",()=>{tilt=Math.max(.32,tilt-.12);drawBig();});
-document.getElementById("tiltD").addEventListener("click",()=>{tilt=Math.min(.92,tilt+.12);drawBig();});
-document.getElementById("rotReset").addEventListener("click",()=>{rotA=45;tilt=.577;drawBig();});
 big.addEventListener("click",e=>{roomFrom(e.target);});
 big.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();roomFrom(e.target);}});
 const chips=document.getElementById("flChips");
