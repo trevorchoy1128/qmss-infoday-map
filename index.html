@@ -193,10 +193,17 @@ h2{font-family:var(--display);font-weight:900;font-size:28px;margin:0 0 14px;let
 #big .n2{animation-delay:.8s}#big .n3{animation-delay:1.6s}
 #big .pulse{animation:pulse 1.6s ease-out infinite;transform-box:fill-box;transform-origin:center}
 #big .live-t{fill:#fff;font-family:var(--body);font-weight:900;font-size:13px;text-anchor:middle}
-.fl-chips{display:none;gap:6px;flex-wrap:wrap;margin:34px 0 4px}
-.fc{border:1.5px solid var(--fc);background:#fff;color:var(--fc);border-radius:10px;padding:6px 0;min-width:44px;font-family:var(--num);font-weight:900;font-size:17px;cursor:pointer}
-.fc.on{background:var(--fc);color:#fff}
-@media (max-width:700px){.iso-grid{grid-template-columns:1fr}#iso{display:none}.fl-chips{display:flex}#big{max-height:none}}
+.liftcol{display:none}
+@media (max-width:700px){
+  .iso-grid{grid-template-columns:minmax(0,1fr) 62px;gap:6px;align-items:center;margin-top:30px}
+  #iso{display:none}#big{max-height:none}
+  .iso-tools{right:auto;left:14px}
+  .liftcol{display:flex;flex-direction:column;gap:3px;padding:5px;border-radius:20px;background:#fff;box-shadow:0 6px 18px rgba(28,21,48,.12)}
+  .fc{display:flex;align-items:center;justify-content:center;gap:3px;height:36px;border:0;border-radius:12px;background:transparent;color:var(--fc);cursor:pointer;padding:0 4px}
+  .fc svg{width:15px;height:15px;flex:none;overflow:visible}
+  .fc b{font-family:var(--num);font-weight:900;font-size:15px;min-width:22px;text-align:left}
+  .fc.on{background:var(--fc);color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+}
 
 #big{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}#big text{pointer-events:none}#big .mk text{pointer-events:auto}#big:active{cursor:grabbing}
 /* Survey bar */
@@ -278,10 +285,10 @@ footer{text-align:center;color:var(--muted);font-size:14px;padding:36px 18px 16p
       <div class="iso-wrap">
         <div class="iso-stage">
           <div class="iso-tools"><span class="iso-tip">拖動地圖可以轉動</span></div>
-          <div class="fl-chips" id="flChips" role="group" aria-label="選擇樓層"></div>
           <div class="iso-grid">
             <svg id="iso" viewBox="0 0 660 860" role="group" aria-label="選擇樓層"></svg>
             <svg id="big" viewBox="0 0 400 330" role="group" aria-label="選中樓層的平面圖"></svg>
+            <nav class="liftcol" id="flChips" aria-label="選擇樓層"></nav>
           </div>
         </div>
         <div class="iso-panel" id="isoPanel" aria-live="polite"></div>
@@ -551,7 +558,7 @@ function drawBig(){
     const bk=Q(110,62);h+=`<g class="notes" fill="#c0412f"><text x="${bk[0]-26}" y="${bk[1]-4}" class="nt n1">♪</text><text x="${bk[0]-12}" y="${bk[1]-12}" class="nt n2">♫</text><text x="${bk[0]-38}" y="${bk[1]-14}" class="nt n3">♪</text></g>`;
     const live=liveNow();if(live){const p=live.spot==="hall"?Q(157,52):bk;h+=`<g class="live"><circle cx="${p[0]}" cy="${p[1]}" r="8" fill="#d1242c"/><circle class="pulse" cx="${p[0]}" cy="${p[1]}" r="8" fill="none" stroke="#d1242c" stroke-width="3"/><rect x="${p[0]-54}" y="${p[1]-42}" width="108" height="24" rx="12" fill="#d1242c"/><text x="${p[0]}" y="${p[1]-25}" class="live-t">${live.text}</text></g>`;}
   }
-  h+=`<text x="12" y="30" class="bf-n" fill="${c}">${f}</text><text x="12" y="52" class="bf-t" fill="${c}">${THEMES[t]}</text>`;
+  h+=`<text x="38" y="38" class="bf-n" fill="${c}">${f}</text><text x="38" y="58" class="bf-t" fill="${c}">${THEMES[t]}</text>`;
   big.innerHTML=h;
 }
 /* rotate by dragging; buttons for touch users */
@@ -565,7 +572,8 @@ big.addEventListener("click",e=>{if(moved){e.stopPropagation();moved=false;}},tr
 big.addEventListener("click",e=>{roomFrom(e.target);});
 big.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();roomFrom(e.target);}});
 const chips=document.getElementById("flChips");
-function renderChips(){chips.innerHTML=FLOORS.map(([f,t],i)=>`<button type="button" class="fc${i===sel?" on":""}" style="--fc:${COL[t][0]}" data-fl="${i}" aria-pressed="${i===sel}">${f}</button>`).join("");}
+const mqBig=window.matchMedia("(max-width:700px)");function fitBig(){big.setAttribute("viewBox",mqBig.matches?"30 14 372 304":"0 0 400 330");}fitBig();try{mqBig.addEventListener("change",fitBig)}catch(e){}
+function renderChips(){chips.innerHTML=FLOORS.map(([f,t],i)=>`<button type="button" class="fc${i===sel?" on":""}" style="--fc:${COL[t][0]}" data-fl="${i}" aria-pressed="${i===sel}" aria-label="${f} ${THEMES[t]}"><svg viewBox="-18 -18 36 36" aria-hidden="true"><g fill="currentColor" stroke="currentColor">${icon(t)}</g></svg><b>${f}</b></button>`).join("");}
 chips.addEventListener("click",e=>{const b=e.target.closest("[data-fl]");if(b)select(+b.dataset.fl);});
 
 /* animation loop */
