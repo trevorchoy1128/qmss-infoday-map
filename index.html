@@ -564,7 +564,7 @@ function drawBig(){
   rooms.filter(r=>r.k==="st").forEach(r=>{
     if(r.n==="電梯"){objs.push([depth(r.x+r.w/2,r.y+r.h/2),prism(r.x+1,r.x+r.w-1,r.y+1,r.y+r.h-1,0,26,"#d9d4e6","#9c94b4","#b8b0cc","#8b82a6")]);labels.push([r.x+r.w/2,r.y+r.h/2,30,"電梯"]);return;}
     h+=`<polygon points="${quad(r.x,r.x+r.w,r.y,r.y+r.h)}" fill="#e4e0ec" stroke="#fff" stroke-width="2.4"/>`;
-    const n=lite?2:8,dy=r.h/n,hs=3.2*8/n;
+    const n=8,dy=r.h/n,hs=3.2;
     for(let k=0;k<n;k++){const y1=r.y+r.h-k*dy,y0=y1-dy;objs.push([depth(r.x+r.w/2,(y0+y1)/2)+k*0.001,prism(r.x+1,r.x+r.w-1,y0,y1,0,(k+1)*hs,"#f4f2f8","#8b82a6","#a79fbf","#8b82a6")]);}
     labels.push([r.x+r.w/2,r.y+r.h/2,n*hs*0.5+10,r.n]);
   });
